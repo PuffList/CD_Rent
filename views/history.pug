@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>История проката</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
+        .container { max-width: 800px; margin: auto; }
+        h1 { text-align: center; color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #007bff; color: white; }
+        nav { margin-bottom: 20px; }
+        nav a { margin-right: 10px; color: #007bff; text-decoration: none; }
+        nav a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <a href="/">Каталог</a>
+            <a href="/history">История проката</a>
+            <a href="/logout">Выйти</a>
+        </nav>
+        <h1>История проката</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Название</th>
+                    <th>Тип</th>
+                    <th>Дата аренды</th>
+                    <th>Срок возврата</th>
+                    <th>Статус</th>
+                </tr>
+            </thead>
+            <tbody>
+                each rental in rentals
+                    <tr>
+                        <td>#{rental.title}</td>
+                        <td>#{rental.type}</td>
+                        <td>#{rental.rent_date}</td>
+                        <td>#{rental.due_date}</td>
+                        <td>#{rental.return_date ? 'Возвращено' : 'Активно'}</td>
+                    </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель администратора</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
+        .container { max-width: 800px; margin: auto; }
+        h1 { text-align: center; color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #007bff; color: white; }
+        button { background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        nav { margin-bottom: 20px; }
+        nav a { margin-right: 10px; color: #007bff; text-decoration: none; }
+        nav a:hover { text-decoration: underline; }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <a href="/">Каталог</a>
+            <a href="/admin">Панель администратора</a>
+            <a href="/logout">Выйти</a>
+        </nav>
+        <h1>Панель администратора</h1>
+        <h2>Управление пользователями</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Имя</th>
+                    <th>Роль</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                each user in users
+                    <tr>
+                        <td>#{user.name}</td>
+                        <td>#{user.role}</td>
+                        <td>
+                            <button class="delete-user-btn" data-id="#{user.id}">Удалить</button>
+                        </td>
+                    </tr>
+            </tbody>
+        </table>
+    </div>
+    <script>
+        $(document).ready(function() {
+            $('.delete-user-btn').click(function() {
+                const userId = $(this).data('id');
+                $.ajax({
+                    url: '/api/users/' + userId,
+                    method: 'DELETE',
+                    success: function(response) {
+                        alert('Пользователь удалён!');
+                        location.reload();
+                    },
+                    error: function(err) {
+                        alert('Ошибка при удалении пользователя.');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

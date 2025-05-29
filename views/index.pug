@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Прокат видео</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
+        .container { max-width: 800px; margin: auto; }
+        h1 { text-align: center; color: #333; }
+        .media-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+        .media-item { background: white; padding: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .media-item h3 { margin: 0 0 10px; color: #007bff; }
+        .media-item p { margin: 5px 0; }
+        button { background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        nav { margin-bottom: 20px; }
+        nav a { margin-right: 10px; color: #007bff; text-decoration: none; }
+        nav a:hover { text-decoration: underline; }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <a href="/">Каталог</a>
+            if user
+                if user.role === 'Клиент'
+                    <a href="/history">История проката</a>
+                else if user.role === 'Сотрудник'
+                    <a href="/manage">Управление инвентарём</a>
+                else if user.role === 'Администратор'
+                    <a href="/admin">Панель администратора</a>
+                <a href="/logout">Выйти</a>
+            else
+                <a href="/register">Регистрация</a>
+                <a href="/login">Вход</a>
+        </nav>
+        <h1>Каталог видеоносителей</h1>
+        <div class="media-list">
+            each media in mediaList
+                <div class="media-item">
+                    <h3>#{media.title}</h3>
+                    <p>Тип: #{media.type}</p>
+                    <p>Жанр: #{media.genre}</p>
+                    <p>Статус: #{media.status === 'Available' ? 'Доступно' : 'Арендовано'}</p>
+                    if user && user.role === 'Клиент' && media.status === 'Available'
+                        <button class="rent-btn" data-id="#{media.id}">Арендовать</button>
+                </div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function() {
+            $('.rent-btn').click(function() {
+                const mediaId = $(this).data('id');
+                $.ajax({
+                    url: '/api/rentals',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ mediaId: mediaId }),
+                    success: function(response) {
+                        alert('Носитель успешно арендован!');
+                        location.reload();
+                    },
+                    error: function(err) {
+                        alert('Ошибка при аренде носителя.');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
