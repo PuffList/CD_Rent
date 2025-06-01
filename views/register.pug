@@ -1,0 +1,26 @@
+//- register.pug
+doctype html
+html(lang="ru")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    title Регистрация
+    style.
+      body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
+      .container { max-width: 400px; margin: auto; }
+      h1 { text-align: center; color: #333; }
+      form { display: flex; flex-direction: column; gap: 10px; }
+      input { padding: 8px; border: 1px solid #ddd; border-radius: 5px; }
+      button { background: #007bff; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
+      button:hover { background: #0056b3; }
+  body
+    .container
+      h1 Регистрация
+      form(action="/register" method="POST")
+        input(type="text" name="name" placeholder="Имя" required)
+        input(type="email" name="email" placeholder="Email" required)
+        input(type="password" name="password" placeholder="Пароль" required)
+        select(name="role")
+          option(value="Клиент") Клиент
+        button(type="submit") Зарегистрироваться
+      p Уже зарегистрированы? #[a(href="/login") Войти]

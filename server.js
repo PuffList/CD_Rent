@@ -1,6 +1,7 @@
 const express = require('express');
 const mysql = require('mysql2');
 const session = require('express-session');
+const bcrypt = require('bcrypt'); // Добавьте для хеширования паролей
 const app = express();
 const port = 3000;
 
@@ -14,10 +15,11 @@ app.use(session({
 app.set('view engine', 'pug');
 app.set('views', './views');
 
+// Настройка MySQL
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'your_password',
+    password: 'root',
     database: 'video_rental'
 });
 
@@ -41,6 +43,46 @@ const checkRole = (role) => (req, res, next) => {
     }
     next();
 };
+
+// Страница регистрации
+app.get('/register', (req, res) => {
+    res.render('register');
+});
+
+app.post('/register', (req, res) => {
+    const { name, email, password, role } = req.body;
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    db.query('INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)', [name, email, hashedPassword, role], (err) => {
+        if (err) return res.status(500).send('Ошибка регистрации');
+        res.redirect('/login');
+    });
+});
+
+// Страница входа
+app.get('/login', (req, res) => {
+    res.render('login');
+});
+
+app.post('/login', (req, res) => {
+    const { email, password } = req.body;
+    db.query('SELECT * FROM users WHERE email = ?', [email], (err, results) => {
+        if (err || results.length === 0) return res.status(400).send('Неверные данные');
+        const user = results[0];
+        if (bcrypt.compareSync(password, user.password)) {
+            req.session.user = { id: user.id, name: user.name, role: user.role };
+            res.redirect('/');
+        } else {
+            res.status(400).send('Неверные данные');
+        }
+    });
+});
+
+// Выход
+app.get('/logout', (req, res) => {
+    req.session.destroy(() => {
+        res.redirect('/login');
+    });
+});
 
 // Главная страница (каталог)
 app.get('/', (req, res) => {
@@ -115,6 +157,36 @@ app.delete('/api/users/:id', checkAuth, checkRole('Администратор'),
         res.json({ message: 'Пользователь удалён' });
     });
 });
+
+// Маршрут для статистики
+app.get('/manage', checkAuth, checkRole('Сотрудник'), (req, res) => {
+      db.query('SELECT * FROM media', (err, mediaList) => {
+          if (err) throw err;
+          db.query('SELECT COUNT(*) as active FROM rentals WHERE return_date IS NULL', (err, activeResult) => {
+              db.query('SELECT COUNT(*) as returned FROM rentals WHERE return_date >= DATE_SUB(NOW(), INTERVAL 7 DAY)', (err, returnedResult) => {
+                  res.render('manage', {
+                      mediaList,
+                      activeRentals: activeResult[0].active,
+                      returnedThisWeek: returnedResult[0].returned
+                  });
+              });
+          });
+      });
+  });
+
+// Маршрут для отчетов
+app.get('/admin', checkAuth, checkRole('Администратор'), (req, res) => {
+      db.query('SELECT * FROM users', (err, users) => {
+          if (err) throw err;
+          db.query('SELECT COUNT(*) as total FROM rentals', (err, totalResult) => {
+              res.render('admin', {
+                  users,
+                  totalRentals: totalResult[0].total,
+                  totalRevenue: 1000 // Пример, замените на реальную логику
+              });
+          });
+      });
+  });
 
 // Запуск сервера
 app.listen(port, () => {

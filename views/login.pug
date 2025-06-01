@@ -1,0 +1,22 @@
+doctype html
+html(lang="ru")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    title Вход
+    style.
+      body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
+      .container { max-width: 400px; margin: auto; }
+      h1 { text-align: center; color: #333; }
+      form { display: flex; flex-direction: column; gap: 10px; }
+      input { padding: 8px; border: 1px solid #ddd; border-radius: 5px; }
+      button { background: #007bff; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
+      button:hover { background: #0056b3; }
+  body
+    .container
+      h1 Вход
+      form(action="/login" method="POST")
+        input(type="email" name="email" placeholder="Email" required)
+        input(type="password" name="password" placeholder="Пароль" required)
+        button(type="submit") Войти
+      p Нет аккаунта? #[a(href="/register") Зарегистрироваться]

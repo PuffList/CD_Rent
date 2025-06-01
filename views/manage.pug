@@ -1,74 +1,64 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Управление инвентарём</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
-        .container { max-width: 800px; margin: auto; }
-        h1 { text-align: center; color: #333; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
-        th { background-color: #007bff; color: white; }
-        button { background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
-        button:hover { background: #0056b3; }
-        nav { margin-bottom: 20px; }
-        nav a { margin-right: 10px; color: #007bff; text-decoration: none; }
-        nav a:hover { text-decoration: underline; }
-    </style>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-</head>
-<body>
-    <div class="container">
-        <nav>
-            <a href="/">Каталог</a>
-            <a href="/manage">Управление инвентарём</a>
-            <a href="/logout">Выйти</a>
-        </nav>
-        <h1>Управление инвентарём</h1>
-        <table>
-            <thead>
-                <tr>
-                    <th>Название</th>
-                    <th>Тип</th>
-                    <th>Статус</th>
-                    <th>Действия</th>
-                </tr>
-            </thead>
-            <tbody>
-                each media in mediaList
-                    <tr>
-                        <td>#{media.title}</td>
-                        <td>#{media.type}</td>
-                        <td>#{media.status === 'Available' ? 'Доступно' : 'Арендовано'}</td>
-                        <td>
-                            if media.status === 'Rented'
-                                <button class="return-btn" data-id="#{media.id}">Подтвердить возврат</button>
-                        </td>
-                    </tr>
-            </tbody>
-        </table>
-    </div>
-    <script>
-        $(document).ready(function() {
-            $('.return-btn').click(function() {
-                const mediaId = $(this).data('id');
-                $.ajax({
-                    url: '/api/returns',
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ mediaId: mediaId }),
-                    success: function(response) {
-                        alert('Возврат успешно подтверждён!');
-                        location.reload();
-                    },
-                    error: function(err) {
-                        alert('Ошибка при подтверждении возврата.');
-                    }
-                });
-            });
+doctype html
+html(lang="ru")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    title Управление инвентарём
+    style.
+      body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
+      .container { max-width: 800px; margin: auto; }
+      h1 { text-align: center; color: #333; }
+      table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+      th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+      th { background-color: #007bff; color: white; }
+      button { background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
+      button:hover { background: #0056b3; }
+      nav { margin-bottom: 20px; }
+      nav a { margin-right: 10px; color: #007bff; text-decoration: none; }
+      nav a:hover { text-decoration: underline; }
+    script(src="https://code.jquery.com/jquery-3.6.0.min.js")
+  body
+    .container
+      nav
+        a(href="/") Каталог
+        a(href="/manage") Управление инвентарём
+        a(href="/logout") Выйти
+      h1 Управление инвентарём
+      table
+        thead
+          tr
+            th Название
+            th Тип
+            th Статус
+            th Действия
+        tbody
+          each media in mediaList
+            tr
+              td #{media.title}
+              td #{media.type}
+              td #{media.status === 'Available' ? 'Доступно' : 'Арендовано'}
+              td
+                if media.status === 'Rented'
+                  button.return-btn(data-id=media.id) Подтвердить возврат
+      h2 Статистика проката
+      p Активных аренд: #{activeRentals}
+      p Возвращено за неделю: #{returnedThisWeek}
+    script.
+      $(document).ready(function() {
+        $('.return-btn').click(function() {
+          const mediaId = $(this).data('id');
+          $.ajax({
+            url: '/api/returns',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ mediaId: mediaId }),
+            success: function(response) {
+              alert('Возврат успешно подтверждён!');
+              location.reload();
+            },
+            error: function(err) {
+              alert('Ошибка при подтверждении возврата.');
+            }
+          });
         });
-    </script>
-</body>
-</html>
+      });
