@@ -6,11 +6,13 @@ html(lang="ru")
     title История проката
     style.
       body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
-      .container { max-width: 800px; margin: auto; }
-      h1 { text-align: center; color: #333; }
-      table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-      th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+      .container { max-width: 1000px; margin: auto; }
+      h1 { color: #333; }
+      table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+      th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
       th { background-color: #007bff; color: white; }
+      .status-active { color: #28a745; font-weight: bold; }
+      .status-returned { color: #6c757d; }
       nav { margin-bottom: 20px; }
       nav a { margin-right: 10px; color: #007bff; text-decoration: none; }
       nav a:hover { text-decoration: underline; }
@@ -20,20 +22,28 @@ html(lang="ru")
         a(href="/") Каталог
         a(href="/history") История проката
         a(href="/logout") Выйти
+
       h1 История проката
+
       table
         thead
           tr
             th Название
-            th Тип
+            th Тип носителя
             th Дата аренды
             th Срок возврата
+            th Дата возврата
             th Статус
         tbody
           each rental in rentals
             tr
               td #{rental.title}
               td #{rental.type}
-              td #{rental.rent_date}
-              td #{rental.due_date}
-              td #{rental.return_date ? 'Возвращено' : 'Активно'}
+              td #{new Date(rental.rent_date).toLocaleString('ru-RU')}
+              td #{new Date(rental.due_date).toLocaleString('ru-RU')}
+              td #{rental.return_date ? new Date(rental.return_date).toLocaleString('ru-RU') : '-'}
+              td(class=rental.return_date ? 'status-returned' : 'status-active')
+                if rental.return_date
+                  | Возвращено
+                else
+                  | Активно

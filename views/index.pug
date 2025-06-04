@@ -3,20 +3,24 @@ html(lang="ru")
   head
     meta(charset="UTF-8")
     meta(name="viewport" content="width=device-width, initial-scale=1.0")
-    title Прокат видео
+    title Каталог видеоносителей
     style.
       body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
-      .container { max-width: 800px; margin: auto; }
-      h1 { text-align: center; color: #333; }
-      .media-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
-      .media-item { background: white; padding: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-      .media-item h3 { margin: 0 0 10px; color: #007bff; }
-      .media-item p { margin: 5px 0; }
-      button { background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
-      button:hover { background: #0056b3; }
+      .container { max-width: 1200px; margin: auto; }
+      h1 { color: #333; }
       nav { margin-bottom: 20px; }
       nav a { margin-right: 10px; color: #007bff; text-decoration: none; }
       nav a:hover { text-decoration: underline; }
+      .media-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+      .media-item { background: white; padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+      .media-item h3 { margin-top: 0; color: #333; }
+      .media-item p { margin: 10px 0; }
+      .price { font-size: 1.2em; font-weight: bold; color: #28a745; }
+      button { background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
+      button:hover { background: #0056b3; }
+      button:disabled { background: #6c757d; cursor: not-allowed; }
+      .status-available { color: #28a745; }
+      .status-rented { color: #dc3545; }
     script(src="https://code.jquery.com/jquery-3.6.0.min.js")
   body
     .container
@@ -33,16 +37,29 @@ html(lang="ru")
         else
           a(href="/register") Регистрация
           a(href="/login") Вход
+
       h1 Каталог видеоносителей
+
       .media-list
         each media in mediaList
           .media-item
             h3 #{media.title}
-            p Тип: #{media.type}
-            p Жанр: #{media.genre}
-            p Статус: #{media.status === 'Available' ? 'Доступно' : 'Арендовано'}
+            p 
+              strong Тип: 
+              span #{media.type}
+            p 
+              strong Жанр: 
+              span #{media.genre}
+            p
+              strong Стоимость аренды: 
+              span #{Number(media.rental_cost).toFixed(2)} руб.
+            p
+              strong Статус: 
+              span(class=media.status === 'Available' ? 'status-available' : 'status-rented')
+                | #{media.status === 'Available' ? 'Доступно' : 'Арендовано'}
             if user && user.role === 'Клиент' && media.status === 'Available'
               button.rent-btn(data-id=media.id) Арендовать
+
     script.
       $(document).ready(function() {
         $('.rent-btn').click(function() {

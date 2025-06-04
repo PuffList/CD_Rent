@@ -6,16 +6,31 @@ html(lang="ru")
     title Управление инвентарём
     style.
       body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
-      .container { max-width: 800px; margin: auto; }
-      h1 { text-align: center; color: #333; }
-      table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-      th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+      .container { max-width: 1000px; margin: auto; }
+      h1, h2 { color: #333; }
+      .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin: 20px 0; }
+      .stat-card { background: white; padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+      .stat-number { font-size: 24px; font-weight: bold; color: #007bff; }
+      table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+      th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
       th { background-color: #007bff; color: white; }
-      button { background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
+      button { background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; margin: 2px; }
       button:hover { background: #0056b3; }
+      button.edit-btn { background: #28a745; }
+      button.edit-btn:hover { background: #218838; }
+      button.delete-btn { background: #dc3545; }
+      button.delete-btn:hover { background: #c82333; }
+      button.return-btn { background: #ffc107; color: #000; }
+      button.return-btn:hover { background: #e0a800; }
+      .form-section { background: white; padding: 20px; border-radius: 5px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+      .form-group { margin-bottom: 15px; }
+      .form-group label { display: block; margin-bottom: 5px; }
+      .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
       nav { margin-bottom: 20px; }
       nav a { margin-right: 10px; color: #007bff; text-decoration: none; }
       nav a:hover { text-decoration: underline; }
+      .success-message { color: green; margin: 10px 0; }
+      .error-message { color: red; margin: 10px 0; }
     script(src="https://code.jquery.com/jquery-3.6.0.min.js")
   body
     .container
@@ -23,41 +38,180 @@ html(lang="ru")
         a(href="/") Каталог
         a(href="/manage") Управление инвентарём
         a(href="/logout") Выйти
+      
       h1 Управление инвентарём
+
+      .stats
+        .stat-card
+          h3 Активные аренды
+          .stat-number #{activeRentals}
+        .stat-card
+          h3 Возвраты за неделю
+          .stat-number #{returnedThisWeek}
+
+      .form-section
+        h2 Добавить новый носитель
+        form#addMediaForm
+          .form-group
+            label(for="title") Название
+            input#title(type="text" name="title" required)
+          .form-group
+            label(for="type") Тип носителя
+            select#type(name="type" required)
+              option(value="Кассета") Кассета
+              option(value="CD") CD
+              option(value="DVD") DVD
+          .form-group
+            label(for="genre") Жанр
+            input#genre(type="text" name="genre" required)
+          .form-group
+            label(for="rental_cost") Стоимость аренды
+            input#rental_cost(type="number" name="rental_cost" step="0.01" min="0" required)
+          button(type="submit") Добавить носитель
+        #addMediaResult
+
+      h2 Каталог носителей
       table
         thead
           tr
             th Название
             th Тип
+            th Жанр
+            th Стоимость аренды
             th Статус
             th Действия
         tbody
           each media in mediaList
-            tr
-              td #{media.title}
-              td #{media.type}
-              td #{media.status === 'Available' ? 'Доступно' : 'Арендовано'}
+            tr(data-id=media.id)
+              td.title #{media.title}
+              td.type #{media.type}
+              td.genre #{media.genre}
+              td.rental_cost #{media.rental_cost}
+              td.status #{media.status === 'Available' ? 'Доступно' : 'Арендовано'}
               td
-                if media.status === 'Rented'
-                  button.return-btn(data-id=media.id) Подтвердить возврат
-      h2 Статистика проката
-      p Активных аренд: #{activeRentals}
-      p Возвращено за неделю: #{returnedThisWeek}
+                if media.status === 'Available'
+                  button.edit-btn(data-id=media.id) Редактировать
+                  button.delete-btn(data-id=media.id) Удалить
+                else
+                  button.return-btn(data-id=media.id) Возврат носителя
+    
     script.
       $(document).ready(function() {
-        $('.return-btn').click(function() {
-          const mediaId = $(this).data('id');
+        // Добавление нового носителя
+        $('#addMediaForm').submit(function(e) {
+          e.preventDefault();
+          const formData = {
+            title: $('#title').val(),
+            type: $('#type').val(),
+            genre: $('#genre').val(),
+            rental_cost: $('#rental_cost').val()
+          };
+          
+          $.ajax({
+            url: '/api/media',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function(response) {
+              $('#addMediaResult').html('<p class="success-message">Носитель успешно добавлен!</p>');
+              setTimeout(() => location.reload(), 1000);
+            },
+            error: function(err) {
+              $('#addMediaResult').html('<p class="error-message">Ошибка при добавлении носителя.</p>');
+            }
+          });
+        });
+
+        // Редактирование носителя
+        $('.edit-btn').click(function() {
+          const row = $(this).closest('tr');
+          const id = $(this).data('id');
+          const title = row.find('.title').text();
+          const type = row.find('.type').text();
+          const genre = row.find('.genre').text();
+          const rental_cost = row.find('.rental_cost').text();
+
+          // Заменяем содержимое ячеек на поля ввода
+          row.find('.title').html(`<input type="text" value="${title}">`);
+          row.find('.type').html(`
+            <select>
+              <option value="Кассета" ${type === 'Кассета' ? 'selected' : ''}>Кассета</option>
+              <option value="CD" ${type === 'CD' ? 'selected' : ''}>CD</option>
+              <option value="DVD" ${type === 'DVD' ? 'selected' : ''}>DVD</option>
+            </select>
+          `);
+          row.find('.genre').html(`<input type="text" value="${genre}">`);
+          row.find('.rental_cost').html(`<input type="number" step="0.01" min="0" value="${rental_cost}">`);
+          
+          // Заменяем кнопку редактирования на кнопки сохранения и отмены
+          $(this).replaceWith(`
+            <button class="save-btn" data-id="${id}">Сохранить</button>
+            <button class="cancel-btn" data-id="${id}">Отмена</button>
+          `);
+        });
+
+        // Делегирование событий для динамически созданных кнопок
+        $(document).on('click', '.save-btn', function() {
+          const row = $(this).closest('tr');
+          const id = $(this).data('id');
+          const data = {
+            title: row.find('.title input').val(),
+            type: row.find('.type select').val(),
+            genre: row.find('.genre input').val(),
+            rental_cost: row.find('.rental_cost input').val()
+          };
+
+          $.ajax({
+            url: `/api/media/${id}`,
+            method: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function() {
+              location.reload();
+            },
+            error: function() {
+              alert('Ошибка при сохранении изменений');
+            }
+          });
+        });
+
+        $(document).on('click', '.cancel-btn', function() {
+          location.reload();
+        });
+
+        // Удаление носителя
+        $(document).on('click', '.delete-btn', function() {
+          if (confirm('Вы уверены, что хотите удалить этот носитель?')) {
+            const id = $(this).data('id');
+            
+            $.ajax({
+              url: `/api/media/${id}`,
+              method: 'DELETE',
+              success: function() {
+                location.reload();
+              },
+              error: function(err) {
+                alert('Ошибка при удалении носителя');
+              }
+            });
+          }
+        });
+
+        // Обработка возврата носителя
+        $(document).on('click', '.return-btn', function() {
+          const id = $(this).data('id');
+          
           $.ajax({
             url: '/api/returns',
             method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({ mediaId: mediaId }),
+            data: JSON.stringify({ mediaId: id }),
             success: function(response) {
-              alert('Возврат успешно подтверждён!');
+              alert('Носитель успешно возвращен!');
               location.reload();
             },
             error: function(err) {
-              alert('Ошибка при подтверждении возврата.');
+              alert('Ошибка при возврате носителя');
             }
           });
         });

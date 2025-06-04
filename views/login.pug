@@ -7,16 +7,32 @@ html(lang="ru")
     style.
       body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
       .container { max-width: 400px; margin: auto; }
-      h1 { text-align: center; color: #333; }
-      form { display: flex; flex-direction: column; gap: 10px; }
-      input { padding: 8px; border: 1px solid #ddd; border-radius: 5px; }
+      h1 { color: #333; text-align: center; }
+      form { display: flex; flex-direction: column; gap: 15px; background: white; padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+      .form-group { display: flex; flex-direction: column; gap: 5px; }
+      label { color: #555; }
+      input { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
       button { background: #007bff; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
       button:hover { background: #0056b3; }
+      .error-message { color: #dc3545; background: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; margin-bottom: 15px; }
+      .ban-message { color: #856404; background: #fff3cd; border: 1px solid #ffeeba; padding: 10px; border-radius: 4px; margin-bottom: 15px; }
+      p { text-align: center; margin-top: 15px; }
+      a { color: #007bff; text-decoration: none; }
+      a:hover { text-decoration: underline; }
   body
     .container
-      h1 Вход
+      h1 Вход в систему
+      if error
+        .error-message #{error}
+      if banned
+        .ban-message
+          | Ваш аккаунт заблокирован. Пожалуйста, обратитесь к администратору для разблокировки.
       form(action="/login" method="POST")
-        input(type="email" name="email" placeholder="Email" required)
-        input(type="password" name="password" placeholder="Пароль" required)
+        .form-group
+          label(for="email") Email
+          input#email(type="email" name="email" required)
+        .form-group
+          label(for="password") Пароль
+          input#password(type="password" name="password" required)
         button(type="submit") Войти
       p Нет аккаунта? #[a(href="/register") Зарегистрироваться]
