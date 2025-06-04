@@ -68,11 +68,28 @@ app.get('/register', (req, res) => {
 });
 
 app.post('/register', (req, res) => {
-    const { name, email, password, role } = req.body;
+    const { name, email, password } = req.body;
     const hashedPassword = bcrypt.hashSync(password, 10);
-    db.query('INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)', [name, email, hashedPassword, role], (err) => {
-        if (err) return res.status(500).send('Ошибка регистрации');
-        res.redirect('/login');
+    
+    // Проверяем, не существует ли уже такой email
+    db.query('SELECT id FROM users WHERE email = ?', [email], (err, results) => {
+        if (err) {
+            return res.status(500).send('Ошибка при регистрации');
+        }
+        
+        if (results.length > 0) {
+            return res.status(400).send('Пользователь с таким email уже существует');
+        }
+        
+        // Создаем нового пользователя с ролью "Клиент"
+        db.query(
+            'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, "Клиент")', 
+            [name, email, hashedPassword], 
+            (err) => {
+                if (err) return res.status(500).send('Ошибка регистрации');
+                res.redirect('/login');
+            }
+        );
     });
 });
 
@@ -163,12 +180,11 @@ app.get('/admin', checkAuth, checkRole('Администратор'), (req, res)
         db.query('SELECT COUNT(*) as total FROM rentals', (err, totalResult) => {
             if (err) throw err;
 
-            // Получаем общую сумму дохода
+            // Получаем общую сумму дохода (включая текущие аренды)
             db.query(`
                 SELECT COALESCE(SUM(m.rental_cost), 0) as total_revenue 
                 FROM rentals r 
-                JOIN media m ON r.media_id = m.id 
-                WHERE r.return_date IS NOT NULL
+                JOIN media m ON r.media_id = m.id
             `, (err, revenueResult) => {
                 if (err) throw err;
 
@@ -277,26 +293,26 @@ app.delete('/api/users/:id', checkAuth, checkRole('Администратор'),
         return res.status(400).json({ error: 'Нельзя удалить свой собственный аккаунт' });
     }
 
-    // Проверяем наличие активных аренд
-    db.query(
-        'SELECT COUNT(*) as active_rentals FROM rentals WHERE user_id = ? AND return_date IS NULL',
-        [userId],
-        (err, results) => {
-            if (err) return res.status(500).json({ error: 'Ошибка базы данных' });
-            
-            if (results[0].active_rentals > 0) {
-                return res.status(400).json({ 
-                    error: 'Нельзя удалить пользователя с активными арендами' 
-                });
-            }
+    // Проверяем роль пользователя
+    db.query('SELECT role FROM users WHERE id = ?', [userId], (err, results) => {
+        if (err) return res.status(500).json({ error: 'Ошибка базы данных' });
+        if (results.length === 0) return res.status(404).json({ error: 'Пользователь не найден' });
 
-            // Удаляем пользователя
-            db.query('DELETE FROM users WHERE id = ?', [userId], (err) => {
-                if (err) return res.status(500).json({ error: 'Ошибка при удалении пользователя' });
-                res.json({ message: 'Пользователь удалён' });
+        const userRole = results[0].role;
+        
+        // Запрещаем удаление клиентов
+        if (userRole === 'Клиент') {
+            return res.status(403).json({ 
+                error: 'Клиентов нельзя удалить. Используйте функцию блокировки для ограничения доступа клиента.' 
             });
         }
-    );
+
+        // Удаляем сотрудника
+        db.query('DELETE FROM users WHERE id = ?', [userId], (err) => {
+            if (err) return res.status(500).json({ error: 'Ошибка при удалении пользователя' });
+            res.json({ message: 'Пользователь удалён' });
+        });
+    });
 });
 
 // API для добавления нового носителя

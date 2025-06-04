@@ -50,7 +50,7 @@ html(lang="ru")
           .stat-number #{totalRentals}
         .stat-card
           h3 Общая сумма дохода
-          .stat-number #{(totalRevenue || 0).toFixed(2)} руб.
+          .stat-number #{totalRevenue.toFixed(2)} руб.
 
       .form-section
         h2 Создать аккаунт сотрудника
@@ -61,40 +61,90 @@ html(lang="ru")
           button.submit-btn(type="submit") Создать аккаунт сотрудника
         #employeeResult
 
-      h2 Управление пользователями
-      table
-        thead
-          tr
-            th Имя
-            th Email
-            th Роль
-            th Статус
-            th Действия
-        tbody
-          each user in users
-            - const roleClass = user.role === 'Администратор' ? 'role-admin' : (user.role === 'Сотрудник' ? 'role-employee' : 'role-client')
-            tr(class=user.is_banned ? 'banned-user' : '')
-              td #{user.name}
-              td #{user.email}
-              td(class=roleClass) #{user.role}
-              td #{user.is_banned ? 'Заблокирован' : 'Активен'}
-              td
-                if user.role !== 'Администратор' || (currentUser && currentUser.id !== user.id)
-                  if user.role === 'Клиент'
-                    if user.is_banned
-                      button.unban-btn(data-id=user.id) Разблокировать
-                    else
-                      button.ban-btn(data-id=user.id) Заблокировать
-                  if currentUser && currentUser.id !== user.id
-                    button.delete-btn(data-id=user.id) Удалить
+      .users-list
+        h2 Управление пользователями
+        table
+          thead
+            tr
+              th Имя
+              th Email
+              th Роль
+              th Статус
+              th Действия
+          tbody
+            each user in users
+              - const roleClass = user.role === 'Администратор' ? 'role-admin' : (user.role === 'Сотрудник' ? 'role-employee' : 'role-client')
+              tr(class=user.is_banned ? 'banned-user' : '')
+                td #{user.name}
+                td #{user.email}
+                td(class=roleClass) #{user.role}
+                td #{user.is_banned ? 'Заблокирован' : 'Активен'}
+                td
+                  if user.id !== currentUser.id
+                    if user.role === 'Клиент'
+                      if user.is_banned
+                        button.unban-btn(onclick=`unbanUser(${user.id})`) Разблокировать
+                      else
+                        button.ban-btn(onclick=`banUser(${user.id})`) Заблокировать
+                    else if user.role === 'Сотрудник'
+                      button.delete-btn(onclick=`deleteUser(${user.id})`) Удалить
 
     script.
+      function deleteUser(userId) {
+        if (!confirm('Вы уверены, что хотите удалить этого сотрудника?')) return;
+        
+        $.ajax({
+          url: `/api/users/${userId}`,
+          method: 'DELETE',
+          success: function() {
+            alert('Пользователь успешно удалён');
+            location.reload();
+          },
+          error: function(xhr) {
+            alert(xhr.responseJSON?.error || 'Ошибка при удалении пользователя');
+          }
+        });
+      }
+
+      function banUser(userId) {
+        $.ajax({
+          url: `/api/users/${userId}/ban`,
+          method: 'POST',
+          success: function() {
+            alert('Пользователь заблокирован');
+            location.reload();
+          },
+          error: function(xhr) {
+            alert(xhr.responseJSON?.error || 'Ошибка при блокировке пользователя');
+          }
+        });
+      }
+
+      function unbanUser(userId) {
+        $.ajax({
+          url: `/api/users/${userId}/unban`,
+          method: 'POST',
+          success: function() {
+            alert('Пользователь разблокирован');
+            location.reload();
+          },
+          error: function(xhr) {
+            alert(xhr.responseJSON?.error || 'Ошибка при разблокировке пользователя');
+          }
+        });
+      }
+
       $(document).ready(function() {
         // Создание сотрудника
         $('#createEmployeeForm').submit(function(e) {
           e.preventDefault();
-          const employeeName = $('#employeeName').val();
+          const employeeName = $('#employeeName').val().trim();
           
+          if (!employeeName) {
+            $('#employeeResult').html('<p class="error-message">Введите имя сотрудника</p>');
+            return;
+          }
+
           $.ajax({
             url: '/api/employees',
             method: 'POST',
@@ -109,62 +159,11 @@ html(lang="ru")
               // Показываем данные на 10 секунд, затем обновляем страницу
               setTimeout(() => location.reload(), 10000);
             },
-            error: function(err) {
+            error: function(xhr) {
               $('#employeeResult').html(
-                '<p class="error-message">Ошибка при создании сотрудника.</p>'
+                '<p class="error-message">' + (xhr.responseJSON?.error || 'Ошибка при создании сотрудника') + '</p>'
               );
             }
           });
-        });
-
-        // Удаление пользователя
-        $('.delete-btn').click(function() {
-          const userId = $(this).data('id');
-          if (confirm('Вы уверены, что хотите удалить этого пользователя?')) {
-            $.ajax({
-              url: `/api/users/${userId}`,
-              method: 'DELETE',
-              success: function(response) {
-                location.reload();
-              },
-              error: function(err) {
-                alert('Ошибка при удалении пользователя');
-              }
-            });
-          }
-        });
-
-        // Блокировка пользователя
-        $('.ban-btn').click(function() {
-          const userId = $(this).data('id');
-          if (confirm('Вы уверены, что хотите заблокировать этого пользователя?')) {
-            $.ajax({
-              url: `/api/users/${userId}/ban`,
-              method: 'POST',
-              success: function(response) {
-                location.reload();
-              },
-              error: function(err) {
-                alert('Ошибка при блокировке пользователя');
-              }
-            });
-          }
-        });
-
-        // Разблокировка пользователя
-        $('.unban-btn').click(function() {
-          const userId = $(this).data('id');
-          if (confirm('Вы уверены, что хотите разблокировать этого пользователя?')) {
-            $.ajax({
-              url: `/api/users/${userId}/unban`,
-              method: 'POST',
-              success: function(response) {
-                location.reload();
-              },
-              error: function(err) {
-                alert('Ошибка при разблокировке пользователя');
-              }
-            });
-          }
         });
       });
