@@ -8,42 +8,67 @@ html(lang="ru")
       body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
       .container { max-width: 1000px; margin: auto; }
       h1 { color: #333; }
-      table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+      table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
       th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
       th { background-color: #007bff; color: white; }
       .status-active { color: #28a745; font-weight: bold; }
       .status-returned { color: #6c757d; }
       nav { margin-bottom: 20px; }
-      nav a { margin-right: 10px; color: #007bff; text-decoration: none; }
+      nav a { margin-right: 10px; color: #007bff; text-decoration: none; cursor: pointer; }
       nav a:hover { text-decoration: underline; }
+      tr:hover { background-color: #f8f9fa; }
+      .no-rentals { text-align: center; padding: 20px; color: #6c757d; }
+    script(src="https://code.jquery.com/jquery-3.6.0.min.js")
   body
     .container
       nav
         a(href="/") Каталог
         a(href="/history") История проката
-        a(href="/logout") Выйти
+        a#logout-link Выйти
 
       h1 История проката
 
-      table
-        thead
-          tr
-            th Название
-            th Тип носителя
-            th Дата аренды
-            th Срок возврата
-            th Дата возврата
-            th Статус
-        tbody
-          each rental in rentals
+      if rentals && rentals.length > 0
+        table
+          thead
             tr
-              td #{rental.title}
-              td #{rental.type}
-              td #{new Date(rental.rent_date).toLocaleString('ru-RU')}
-              td #{new Date(rental.due_date).toLocaleString('ru-RU')}
-              td #{rental.return_date ? new Date(rental.return_date).toLocaleString('ru-RU') : '-'}
-              td(class=rental.return_date ? 'status-returned' : 'status-active')
-                if rental.return_date
-                  | Возвращено
-                else
-                  | Активно
+              th Название
+              th Тип носителя
+              th Дата аренды
+              th Срок возврата
+              th Дата возврата
+              th Статус
+          tbody
+            each rental in rentals
+              tr
+                td #{rental.title}
+                td #{rental.type}
+                td #{new Date(rental.rent_date).toLocaleString('ru-RU')}
+                td #{new Date(rental.due_date).toLocaleString('ru-RU')}
+                td #{rental.return_date ? new Date(rental.return_date).toLocaleString('ru-RU') : '-'}
+                td(class=rental.return_date ? 'status-returned' : 'status-active')
+                  if rental.return_date
+                    | Возвращено
+                  else
+                    | Активно
+      else
+        .no-rentals
+          p У вас пока нет арендованных носителей
+
+    script.
+      $(document).ready(function() {
+        // Обработка выхода
+        $('#logout-link').click(function(e) {
+          e.preventDefault();
+          $.ajax({
+            url: '/auth/logout',
+            method: 'POST',
+            success: function() {
+              window.location.href = '/login';
+            },
+            error: function() {
+              alert('Ошибка при выходе из системы');
+            }
+          });
+        });
+      });

@@ -7,21 +7,22 @@ html(lang="ru")
     title Регистрация
     style.
       body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
-      .container { max-width: 400px; margin: auto; }
-      h1 { color: #333; text-align: center; }
-      form { display: flex; flex-direction: column; gap: 15px; background: white; padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-      .form-group { display: flex; flex-direction: column; gap: 5px; }
-      label { color: #555; }
-      input { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
-      button { background: #007bff; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
+      .container { max-width: 400px; margin: 40px auto; background: white; padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+      h1 { text-align: center; color: #333; }
+      .form-group { margin-bottom: 15px; }
+      label { display: block; margin-bottom: 5px; color: #666; }
+      input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+      button { width: 100%; padding: 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
       button:hover { background: #0056b3; }
-      p { text-align: center; margin-top: 15px; }
-      a { color: #007bff; text-decoration: none; }
-      a:hover { text-decoration: underline; }
+      .error { color: red; margin-top: 10px; }
+      .login-link { text-align: center; margin-top: 15px; }
+      .login-link a { color: #007bff; text-decoration: none; }
+      .login-link a:hover { text-decoration: underline; }
+    script(src="https://code.jquery.com/jquery-3.6.0.min.js")
   body
     .container
       h1 Регистрация
-      form(action="/register" method="POST")
+      form#registerForm
         .form-group
           label(for="name") Имя
           input#name(type="text" name="name" required)
@@ -32,4 +33,37 @@ html(lang="ru")
           label(for="password") Пароль
           input#password(type="password" name="password" required)
         button(type="submit") Зарегистрироваться
-      p Уже есть аккаунт? #[a(href="/login") Войти]
+        #error.error
+      .login-link
+        | Уже есть аккаунт? 
+        a(href="/login") Войти
+
+    script.
+      $(document).ready(function() {
+        $('#registerForm').submit(function(e) {
+          e.preventDefault();
+          
+          const formData = {
+            name: $('#name').val(),
+            email: $('#email').val(),
+            password: $('#password').val()
+          };
+
+          $.ajax({
+            url: '/auth/register',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function(response) {
+              if (response.success) {
+                window.location.href = '/';
+              } else {
+                $('#error').text(response.error || 'Ошибка при регистрации');
+              }
+            },
+            error: function(xhr) {
+              $('#error').text(xhr.responseJSON?.error || 'Ошибка при регистрации');
+            }
+          });
+        });
+      });
